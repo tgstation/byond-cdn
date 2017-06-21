@@ -41,8 +41,6 @@
 #include <vector>
 #include <string>
 using namespace std;
-#define MAX_FILE_PATH_LENGTH 4096
-
 
 string sanitize(string str) {
 	size_t index = 0;
@@ -63,38 +61,59 @@ string sanitize(string str) {
 	
 int parse() {
 	string filepath;
-	unsigned int len;
+	unsigned int recordlen;
+	char type;
 	while(cin) {
 		if (cin.fail())
 			return 0;
-		cin.ignore(18); //ignore bullshit meta data
+		cin.read((char*)&recordlen, 4); //get the record size
+		
+		if (recordlen < 1)
+			return 0;
+		if (cin.eof())
+			return 0;
 		if (cin.fail())
 			return 0;
 		
-		cin.read((char*)&len, 4); //get the file size
+		
+		cin.read(&type, 1); //get the record type
+		if ((int)type != 1) {
+			cin.ignore(recordlen);
+			continue;
+		}
+		
+		if (recordlen < 1 || cin.fail() || cin.eof())
+			return 13;
+		
+		cin.ignore(17); //ignore bullshit meta data
+		recordlen -= cin.gcount();
+		
+		if (recordlen < 1 || cin.fail() || cin.eof())
+			return 1;
+
+		getline(cin, filepath, '\0');  //get the filename
+		
+		recordlen -= filepath.size() + 1;
+		
+		if (recordlen < 0 || cin.fail() || cin.eof())
+			return 2;
+		
+		filepath = sanitize(filepath);
+
+		cout << "'" << filepath << "'," << endl;
+		cin.ignore(recordlen);
 		if (cin.fail())
 			return 3;
-
-		if (cin.fail())
-			return 4;
-		getline(cin, filepath, '\0');  //get the filename
-		filepath = sanitize(filepath);
-		if (cin.fail())
-			return 5;
-		cout << "'" << filepath << "'," << endl;
-		if (cin.fail())
-			return 6;
-		cin.ignore(len);
-		if (cin.fail())
-			return 7;
 	}
 	return 0;
 }
 
 int main() {
-	
 	cout << "var/files = list(";
 	int rtn =  parse();
 	cout << "\"\")";
+	if (!rtn)
+		cerr << "Error Code " << rtn;
+	return rtn;
 }
 

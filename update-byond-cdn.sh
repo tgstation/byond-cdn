@@ -1,6 +1,8 @@
 #!/bin/bash
 
 cd tgstation/
+rm -f tgstation.rsc
+
 git fetch origin
 git reset --hard origin/master
 DreamMaker tgstation.dme
